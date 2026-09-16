@@ -61,14 +61,20 @@ else
     find . -print >"$work/files"
 fi
 
-log "archiving $DATA_DIR"
+included=$({
+    sed -n 's|^\./\([^/]*\).*|\1|p' "$work/files" | sort -u | while IFS= read -r name; do
+        if [ -d "$name" ]; then echo "$name/"; else echo "$name"; fi
+    done
+    for db in $SQLITE; do echo "$db (snapshot)"; done
+} | sort | tr '\n' ' ')
+log "including: $included"
+
 # tar exits 1 if a file changed while it was read; that's fine for a live directory
 tar -cf "$work/backup.tar" --no-recursion -T "$work/files" || [ $? -eq 1 ]
 if [ -n "$SQLITE" ]; then
     tar -rf "$work/backup.tar" -C "$work/sqlite" .
 fi
 
-log "compressing and encrypting"
 for recipient in $BACKUP_AGE_RECIPIENTS; do
     printf '%s\n' "$recipient"
 done >"$work/recipients"
