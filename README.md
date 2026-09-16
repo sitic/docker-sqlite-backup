@@ -14,7 +14,7 @@ Image: `ghcr.io/sitic/docker-sqlite-backup:latest`
 | --- | --- | --- |
 | `BACKUP_NAME` | yes | Archive name prefix, e.g. `vaultwarden` → `vaultwarden-20260916T033000Z.tar.zst.age` |
 | `BACKUP_DESTINATIONS` | yes | Space-separated rclone `remote:path` list, e.g. `gcs:bucket/vaultwarden oci:bucket/vaultwarden` |
-| `BACKUP_AGE_RECIPIENTS` | yes | Space-separated age (or SSH) public keys |
+| `BACKUP_AGE_RECIPIENTS` | yes | Space-separated age public keys (`age1...`) |
 | `BACKUP_SQLITE` | no | Space-separated SQLite files, relative to the data dir. Snapshotted with `.backup` and integrity-checked; the live files and their `-wal`/`-shm` are excluded |
 | `BACKUP_EXCLUDE` | no | Space-separated paths or `find -path` patterns relative to the data dir, e.g. `icon_cache tmp` |
 | `BACKUP_KEEP_DAYS` | no | Delete `$BACKUP_NAME-*` archives older than this from each destination after a successful upload. Unset: never delete |

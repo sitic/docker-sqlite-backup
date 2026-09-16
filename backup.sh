@@ -3,7 +3,6 @@
 # rest, compress with zstd, encrypt with age and upload with rclone.
 # All configuration comes from environment variables, see README.md.
 set -eu
-set -o pipefail
 set -f # variables below hold paths and patterns, never let the shell glob them
 
 : "${BACKUP_NAME:?set BACKUP_NAME, e.g. vaultwarden}"
@@ -42,7 +41,7 @@ for db in $SQLITE; do
     rm -f "$work/sqlite/$db-wal" "$work/sqlite/$db-shm"
     # Opening the database can create -wal/-shm files as root, which a
     # non-root app then can't write. Hand them to the database's owner.
-    owner=$(ls -ln "$db" | awk '{print $3 ":" $4}')
+    owner=$(stat -c '%u:%g' "$db")
     for f in "$db-wal" "$db-shm"; do
         if [ -e "$f" ]; then chown "$owner" "$f"; fi
     done
@@ -70,9 +69,12 @@ if [ -n "$SQLITE" ]; then
 fi
 
 log "compressing and encrypting"
-printf '%s\n' $BACKUP_AGE_RECIPIENTS >"$work/recipients"
-zstd -q -T0 -c "$work/backup.tar" | age -R "$work/recipients" -o "$work/$archive"
-rm "$work/backup.tar"
+for recipient in $BACKUP_AGE_RECIPIENTS; do
+    printf '%s\n' "$recipient"
+done >"$work/recipients"
+zstd -q -T0 --rm "$work/backup.tar" -o "$work/backup.tar.zst"
+age -R "$work/recipients" -o "$work/$archive" "$work/backup.tar.zst"
+rm "$work/backup.tar.zst"
 size=$(du -h "$work/$archive" | cut -f1)
 
 failed=0
